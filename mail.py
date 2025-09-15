@@ -94,7 +94,7 @@ def descriptografar(mensagem_criptografada:str, senha: str) -> str:
         dados_descriptografados = cipher.decrypt_and_verify(ciphertext, tag)
         return dados_descriptografados.decode('utf-8')
     except ValueError:
-        return "Erro: Falha na autenticação. A mensagem ou a senha estão incorretas."
+        return "Erro: Falha na autenticação."
 
 
 def test_stress():

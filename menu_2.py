@@ -1,9 +1,16 @@
+import string
 import sqlite3
 import hashlib
 import secrets
 import string
 from mail import *
 from os import system
+
+
+def gerar_string_aleatoria_32():
+    caracteres = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(caracteres) for _ in range(32))
+
 
 def clean():
     # Se for rodar no Windows troque "clear" por "cls"
@@ -76,6 +83,7 @@ def inserir_usuario(conn, nome, email, senha):
         
         conn.commit()
         print("Usuário cadastrado com sucesso!")
+        input()
         return True
         
     except sqlite3.Error as error:
@@ -131,12 +139,15 @@ def listar_usuarios(conn):
         print(f"Erro ao listar usuários: {error}")
 
 
-def criar_chave(conn, email_1, email_2, chave) -> None:
+def criar_chave(conn, email_1, email_2) -> None:
+    chave = gerar_string_aleatoria_32()
+    
     try:
         cursor = conn.cursor()
         cursor.execute(f"INSERT into chaves (email_1, email_2, cnave_privada) VALUES ('{email_1}', '{email_2}', '{chave}')")
         conn.commit()
         print("Chave Cadastrada com Sucesso!")
+        input()
     
     except:
         return None
@@ -174,9 +185,7 @@ def menu_usuario(conn, nome: str, email: str) -> None:
         if option == 1:
             print("Digite o email para criar a chave: ")
             email_2 = input()
-            print("Digite a Chave privada")
-            chave = input()
-            criar_chave(conn, email, email_2, chave)
+            criar_chave(conn, email, email_2)
         elif option == 2:
             print("Inserir Mensagem para Criptografar: ")
             msg = input()
@@ -189,8 +198,10 @@ def menu_usuario(conn, nome: str, email: str) -> None:
             if chave != None:
                 criptografar(nome, msg, d_email, chave)
                 print(f"Mensagem Criptografada enviada para {d_email}")
+                input()
             else:
                 print("Chave Privada não cadastrada!")
+                input()
         
         elif option == 3:
             print("Inserir Mensagem criptografada: ")
@@ -202,8 +213,10 @@ def menu_usuario(conn, nome: str, email: str) -> None:
             if chave != None:
                 msg = descriptografar(msg_cryp, chave)
                 print(msg)
+                input()
             else:
                 print("Não existe chave entre você e esse usuário")
+                input()
         
         elif option == 4:
             return
