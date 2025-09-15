@@ -1,4 +1,3 @@
-import wmi
 import base64
 import smtplib
 from email.mime.text import MIMEText

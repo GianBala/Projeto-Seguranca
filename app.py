@@ -1,3 +1,3 @@
-from menu import *
+from menu_2 import *
 
-menu_entrada("usuarios_cadastrados.json")
+menu()
