@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Principal - Secret MSG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SECRET MSG</h1>
+        </div>
+        <p class="user-info">Usuário: {{ usuario }}</p>
+
+        <a href="{{ url_for('cadastrar_chave_privada') }}" class="btn btn-menu" style="text-decoration: none; display: block;">Cadastrar Chave Privada</a>
+        <a href="{{ url_for('enviar_mensagem') }}" class="btn btn-menu" style="text-decoration: none; display: block;">Enviar Mensagem</a>
+        <a href="{{ url_for('descriptografar_mensagem') }}" class="btn btn-menu" style="text-decoration: none; display: block;">Descriptografar Mensagem</a>
+        <a href="{{ url_for('pesquisar_usuarios') }}" class="btn btn-menu" style="text-decoration: none; display: block;">Pesquisar Usuários</a>
+        <a href="{{ url_for('desconectar') }}" class="btn btn-menu" style="text-decoration: none; display: block;">Desconectar</a>
+
+    </div>
+     {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <script>
+          // Pega a primeira mensagem da lista e mostra como um alerta
+          alert("{{ messages[0] }}");
+        </script>
+      {% endif %}
+    {% endwith %}
+</body>
+</html>

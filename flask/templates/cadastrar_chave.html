@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chave Privada - Secret MSG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="body-container">
+        <form id="form-envio" action="{{ url_for('criar_chave') }}" method="post">
+            
+            <input type="hidden" id="hidden-destinatario" name="destinatario">
+            <input type="hidden" id="hidden-nome_destinatario" name="nome_d">
+            
+            <div class="container">
+                <div class="header-with-back">
+                    <a href="{{ url_for('menu_principal') }}" class="back-button">&#x2B05;</a>
+                    <h1>SECRET MSG</h1>
+                </div>
+                <p class="user-info">Usuário: {{ usuario }}</p>
+
+                <button type="button" id="selecionar-dest-btn" class="btn btn-menu">Selecionar Destinatario</button>
+                
+                <button type="button" id="btn-gerar-chave" class="btn btn-menu">Gerar Nova Chave</button>
+
+                <button type="button" class="btn btn-menu">Deletar Chave</button>
+
+                <p id="destinatario-selecionado" class="selected-recipient-display" data-email-selecionado="" style="text-align: center; margin-top: 20px;">Destinatário: Ninguém</p>
+            </div>
+        </form> <div id="lista-destinatarios" class="recipient-list-popup">
+            {% for contato in contatos %}
+                <div class="recipient-item" data-nome="{{ contato.nome }}" data-email="{{ contato.email }}">
+                    <span>{{ contato.nome }}</span>
+                    <span>{{ contato.email }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        // --- Lógica de seleção (sem alterações) ---
+        const botaoAbrir = document.getElementById('selecionar-dest-btn');
+        const popupLista = document.getElementById('lista-destinatarios');
+        const displayDestinatario = document.getElementById('destinatario-selecionado');
+        const todosOsItensDaLista = document.querySelectorAll('.recipient-item');
+
+        botaoAbrir.addEventListener('click', function() {
+            popupLista.style.display = 'block';
+        });
+
+        todosOsItensDaLista.forEach(function(item) {
+            item.addEventListener('click', function() {
+                const emailSelecionado = item.getAttribute('data-email');
+                const nomeEscolhido = item.getAttribute('data-nome');
+                
+                displayDestinatario.textContent = 'Destinatário: ' + nomeEscolhido;
+                displayDestinatario.setAttribute('data-email-selecionado', emailSelecionado);
+                
+                popupLista.style.display = 'none';
+            });
+        });
+
+        // --- Lógica de Envio (com correções) ---
+        const formEnvio = document.getElementById('form-envio');
+        const hiddenDestinatario = document.getElementById('hidden-destinatario');
+        const hidden_nome_destinatario = document.getElementById('hidden-nome_destinatario');
+        const btnGerarChave = document.getElementById('btn-gerar-chave');
+
+        // CORREÇÃO 2: A variável 'item' foi removida do escopo global, pois causava erro.
+
+        function prepararEEnviar() {
+            // CORREÇÃO 3: A lógica para pegar os dados foi movida para DENTRO da função
+            const destinatarioEmail = displayDestinatario.getAttribute('data-email-selecionado');
+            // Pega o nome a partir do texto visível na tela
+            const destinatarioNome = displayDestinatario.textContent.replace('Destinatário: ', '').trim();
+            
+            if (!destinatarioEmail || destinatarioNome === 'Ninguém') {
+                alert('Por favor, selecione um destinatário.');
+                return;
+            }
+            
+            // Atribui os valores corretos aos campos ocultos no momento do clique
+            hiddenDestinatario.value = destinatarioEmail;
+            hidden_nome_destinatario.value = destinatarioNome;
+            
+            console.log(`Enviando formulário com: Email='${destinatarioEmail}', Nome='${destinatarioNome}'`);
+            formEnvio.submit();
+        }
+
+        btnGerarChave.addEventListener('click', prepararEEnviar);
+    </script>
+    
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <script>
+          alert("{{ messages[0] }}");
+        </script>
+      {% endif %}
+    {% endwith %}
+</body>
+</html>

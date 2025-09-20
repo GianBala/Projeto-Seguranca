@@ -1,0 +1,265 @@
+/* Estilos Gerais */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    color: #333;
+}
+
+.container {
+    background-color: #ffffff;
+    border: 5px solid #000;
+    border-radius: 25px;
+    padding: 30px;
+    width: 350px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* Cabeçalho */
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    font-size: 2em;
+    font-weight: bold;
+    color: #6c757d;
+    margin: 0;
+}
+
+.header-with-back {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.back-button {
+    font-size: 2em;
+    color: #000;
+    text-decoration: none;
+    border: 2px solid #000;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-with-back h1 {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.user-info {
+    text-align: left;
+    margin-bottom: 20px;
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+/* Títulos de Página */
+.page-title {
+    text-align: center;
+    margin-top: 25px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Formulários e Botões */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-input, .form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #000;
+    border-radius: 15px;
+    box-sizing: border-box;
+    font-size: 1em;
+    text-align: center;
+}
+
+.form-textarea {
+    height: 150px;
+    resize: none;
+    text-align: left;
+    padding: 15px;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #000;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-size: 1.1em;
+    cursor: pointer;
+    margin-top: 10px;
+    box-sizing: border-box;
+}
+
+.btn-primary {
+    border-radius: 8px;
+    font-weight: normal;
+}
+
+.btn-secondary {
+    border-radius: 8px;
+    font-weight: normal;
+    background-color: #e9ecef;
+}
+
+.btn-menu {
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.btn-inline-group {
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn-inline {
+    width: 48%;
+}
+
+.send-using-label {
+    margin-top: 15px;
+    margin-bottom: 5px;
+    color: #6c757d;
+    font-size: 1em;
+}
+
+/* Pesquisa de Usuários */
+.search-options {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    border: 2px solid #000;
+    border-radius: 8px;
+    padding: 5px;
+}
+
+.search-options input[type="text"] {
+    border: none;
+    outline: none;
+    flex-grow: 1;
+    padding: 5px;
+}
+
+.user-list {
+    border: 2px solid #000;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: left;
+}
+
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.user-item:last-child {
+    margin-bottom: 0;
+}
+
+.user-item span {
+    font-size: 0.9em;
+}
+
+.radio-button {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #000;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* static/css/style.css */
+
+/* Adicione ao final do seu CSS */
+
+/* Container para alinhar a app e a lista de seleção lado a lado */
+.body-container {
+    display: flex;
+    align-items: flex-start; /* Alinha os itens no topo */
+    gap: 20px; /* Espaço entre a app e a lista */
+}
+
+/* A janela de seleção de destinatários (popup) */
+.recipient-list-popup {
+    border: 3px solid #000;
+    border-radius: 15px;
+    padding: 10px;
+    width: 300px;
+    background-color: #fff;
+    
+    /* Para a barra de rolagem */
+    max-height: 400px; /* Defina uma altura máxima */
+    overflow-y: auto; /* Adiciona scroll se o conteúdo ultrapassar */
+
+    /* Inicialmente escondido */
+    display: none; 
+}
+
+/* Cada item na lista de seleção */
+.recipient-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border: 1px solid #000;
+    margin-bottom: 5px;
+    cursor: pointer;
+    background-color: #f8f9fa;
+}
+
+.recipient-item:hover {
+    background-color: #e2e6ea;
+}
+
+.recipient-item span {
+    font-size: 0.9em;
+}
+
+/* Estilo para o texto "Para: XXXX" */
+.selected-recipient-display {
+    text-align: left;
+    margin-top: 15px;
+    color: #6c757d;
+    font-weight: bold;
+}
+
+/* Adicione ao final de static/css/style.css */
+
+.result-panel-popup {
+    display: none; /* Começa escondido */
+    width: 300px;
+    background-color: #f8f9fa;
+    border: 3px solid #000;
+    border-radius: 15px;
+    padding: 15px;
+    box-sizing: border-box;
+    font-family: monospace; /* Fonte boa para exibir texto criptografado/descriptografado */
+    word-wrap: break-word; /* Garante que textos longos quebrem a linha */
+}
+
+/* Estilo para o texto do resultado dentro do painel */
+.result-panel-popup pre {
+    white-space: pre-wrap; /* Mantém a formatação e quebra a linha */
+    margin: 0;
+    font-size: 0.9em;
+}

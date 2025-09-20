@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Secret MSG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header-with-back">
+            <a href="{{ url_for('login') }}" class="back-button">&#x2B05;</a>
+            <h1>SECRET MSG</h1>
+        </div>
+
+        <form action="{{ url_for('do_cadastro') }}" method="post">
+            <div class="form-group">
+                <input type="text" name="nome" class="form-input" placeholder="Nome" required>
+            </div>
+            <div class="form-group">
+                <input type="email" name="email" class="form-input" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+                <input type="password" name="senha" class="form-input" placeholder="Senha" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Finalizar Cadastro</button>
+        </form>
+
+    </div>
+</body>
+</html>

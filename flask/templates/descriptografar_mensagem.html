@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descriptografar Mensagem - Secret MSG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        #status-message { margin-top: 15px; font-weight: bold; min-height: 1.2em; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <div class="body-container">
+        
+        <div id="lista-remetentes" class="recipient-list-popup">
+            {% for contato in contatos %}
+                <div class="recipient-item" data-nome="{{ contato.nome }}" data-email="{{ contato.email }}">
+                    <span>{{ contato.nome }}</span>
+                    <span>{{ contato.email }}</span>
+                </div>
+            {% endfor %}
+        </div>
+
+        <form id="form-descriptografar">
+            <div class="container">
+                <div class="header-with-back">
+                    <a href="{{ url_for('menu_principal') }}" class="back-button">&#x2B05;</a>
+                    <h1>SECRET MSG</h1>
+                </div>
+                <p class="user-info">Usuário: {{ usuario }}</p>
+
+                <textarea id="msg-criptografada-input" class="form-textarea" placeholder="Digite a Mensagem Criptografada"></textarea>
+                
+                <button type="button" id="selecionar-remetente-btn" class="btn btn-secondary">Selecionar Remetente</button>
+
+                <div class="btn-inline-group" style="margin-top: 15px;">
+                    <button type="button" id="btn-chave-privada" class="btn btn-inline">Chave Privada</button>
+                    <button type="button" id="btn-chave-publica" class="btn btn-inline">Chave Pública</button>
+                </div>
+
+                <p id="remetente-selecionado" class="selected-recipient-display" data-email-selecionado="">Remetente: Ninguém</p>
+                <p id="tipo-chave-selecionada" class="selected-recipient-display" data-chave-selecionada="">Tipo de Chave: Nenhuma</p>
+
+                <button type="button" id="btn-descriptografar" class="btn btn-primary">Descriptografar</button>
+                
+                <div id="status-message"></div>
+            </div>
+        </form>
+
+        <div id="painel-resultado" class="result-panel-popup">
+            <h4 style="margin-top: 0;">Resultado:</h4>
+            <pre id="resultado-texto" class=""></pre>
+        </div>
+    </div>
+
+    <script>
+        // --- Referências aos Elementos ---
+        const popupLista = document.getElementById('lista-remetentes');
+        const displayRemetente = document.getElementById('remetente-selecionado');
+        const displayTipoChave = document.getElementById('tipo-chave-selecionada');
+        const statusMessageDiv = document.getElementById('status-message');
+        const msgCriptografadaInput = document.getElementById('msg-criptografada-input');
+
+        // NOVO: Referências ao novo painel de resultado
+        const resultadoPainel = document.getElementById('painel-resultado');
+        const resultadoTexto = document.getElementById('resultado-texto');
+
+        // --- Lógica de Seleção de Remetente (sem alterações) ---
+        document.getElementById('selecionar-remetente-btn').addEventListener('click', () => {
+            popupLista.style.display = 'block';
+        });
+        document.querySelectorAll('.recipient-item').forEach(item => {
+            item.addEventListener('click', () => {
+                displayRemetente.textContent = 'Remetente: ' + item.getAttribute('data-nome');
+                displayRemetente.setAttribute('data-email-selecionado', item.getAttribute('data-email'));
+                popupLista.style.display = 'none';
+            });
+        });
+
+        // --- Lógica de Seleção do Tipo de Chave (sem alterações) ---
+        document.getElementById('btn-chave-privada').addEventListener('click', () => {
+            displayTipoChave.textContent = 'Tipo de Chave: Privada';
+            displayTipoChave.setAttribute('data-chave-selecionada', 'privada');
+        });
+        document.getElementById('btn-chave-publica').addEventListener('click', () => {
+            displayTipoChave.textContent = 'Tipo de Chave: Pública';
+            displayTipoChave.setAttribute('data-chave-selecionada', 'publica');
+        });
+
+        // --- Lógica de Envio para Descriptografar (ATUALIZADA) ---
+        document.getElementById('btn-descriptografar').addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            // NOVO: Limpa e esconde resultados anteriores antes de uma nova tentativa
+            resultadoPainel.style.display = 'none';
+            statusMessageDiv.textContent = '';
+            resultadoTexto.textContent = '';
+            resultadoTexto.className = '';
+
+            const msgCriptografada = msgCriptografadaInput.value;
+            const remetenteEmail = displayRemetente.getAttribute('data-email-selecionado');
+            const tipoChave = displayTipoChave.getAttribute('data-chave-selecionada');
+
+            if (!msgCriptografada.trim() || !remetenteEmail || !tipoChave) {
+                // Usa a div interna para erros de validação
+                statusMessageDiv.textContent = 'Preencha todos os campos.';
+                statusMessageDiv.className = 'error';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('msg_criptografada', msgCriptografada);
+            formData.append('remetente', remetenteEmail);
+            formData.append('tipo_chave', tipoChave);
+
+            try {
+                const response = await fetch("{{ url_for('processar_descriptografia') }}", {
+                    method: 'POST', body: formData,
+                });
+                const data = await response.json();
+
+                // MUDANÇA: Em vez de usar a div antiga, usamos os novos elementos
+                resultadoTexto.textContent = data.message;
+                resultadoTexto.className = response.ok ? 'success' : 'error';
+                
+                // A MÁGICA ACONTECE AQUI: Torna o painel de resultado visível
+                resultadoPainel.style.display = 'block';
+
+            } catch (error) {
+                console.error('Erro na requisição:', error);
+                resultadoTexto.textContent = 'Erro de conexão com o servidor.';
+                resultadoTexto.className = 'error';
+                resultadoPainel.style.display = 'block'; // Mostra o painel mesmo em caso de erro de rede
+            }
+        });
+    </script>
+</body>
+</html>

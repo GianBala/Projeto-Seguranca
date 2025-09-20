@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Mensagem - Secret MSG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    
+    <div class="body-container">
+        
+        <form id="form-envio" action="{{ url_for('envio_chave_privada') }}" method="post">
+            <input type="hidden" id="hidden-msg" name="msg">
+            <input type="hidden" id="hidden-destinatario" name="destinatario">
+            <input type="hidden" id="hidden-chave" name="chave">
+
+            <div class="container">
+                <div class="header-with-back">
+                    <a href="{{ url_for('menu_principal') }}" class="back-button">&#x2B05;</a>
+                    <h1>SECRET MSG</h1>
+                </div>
+                <p class="user-info">Usuário: {{ usuario }}</p>
+
+                <textarea id="mensagem-texto" class="form-textarea" placeholder="Digite sua Mensagem"></textarea>
+                
+                <button type="button" id="selecionar-dest-btn" class="btn btn-secondary" style="margin-bottom: 15px;">Selecionar Destinatario</button>
+
+                <p class="send-using-label">Enviar usando:</p>
+                <div class="btn-inline-group">
+                    <button type="button" id="btn-chave-privada" class="btn btn-inline">Chave Privada</button>
+                    <button type="button" id="btn-chave-publica" class="btn btn-inline">Chave Pública</button>
+                </div>
+                
+                <p id="destinatario-selecionado" class="selected-recipient-display">Para: XXXX</p>
+            </div>
+        </form>
+
+        <div id="lista-destinatarios" class="recipient-list-popup">
+            {% for contato in contatos %}
+                <div class="recipient-item" data-nome="{{ contato.nome }}" data-email="{{ contato.email }}">
+                    <span>{{ contato.nome }}</span>
+                    <span>{{ contato.email }}</span>
+                </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <script>
+        // --- PARTE 1: Lógica da seleção de destinatário ---
+        const botaoAbrir = document.getElementById('selecionar-dest-btn');
+        const popupLista = document.getElementById('lista-destinatarios');
+        const displayDestinatario = document.getElementById('destinatario-selecionado');
+        const todosOsItensDaLista = document.querySelectorAll('.recipient-item');
+        
+        botaoAbrir.addEventListener('click', function() {
+            popupLista.style.display = 'block';
+        });
+
+        todosOsItensDaLista.forEach(function(item) {
+            item.addEventListener('click', function() {
+                const nomeSelecionado = item.getAttribute('data-nome');
+                const emailSelecionado = item.getAttribute('data-email');
+                displayDestinatario.textContent = 'Para: ' + nomeSelecionado;
+                displayDestinatario.setAttribute('data-email-selecionado', emailSelecionado);
+                popupLista.style.display = 'none';
+            });
+        });
+
+        // --- PARTE 2: Lógica para o envio com as chaves ---
+        const formEnvio = document.getElementById('form-envio');
+        const mensagemInput = document.getElementById('mensagem-texto');
+        const btnChavePrivada = document.getElementById('btn-chave-privada');
+        const btnChavePublica = document.getElementById('btn-chave-publica');
+        const hiddenMsg = document.getElementById('hidden-msg');
+        const hiddenDestinatario = document.getElementById('hidden-destinatario');
+        const hiddenChave = document.getElementById('hidden-chave');
+
+        function prepararEEnviar(tipoChave) {
+            const mensagem = mensagemInput.value;
+            const destinatario = displayDestinatario.getAttribute('data-email-selecionado');
+            
+            if (!mensagem || !destinatario) {
+                alert('Por favor, digite uma mensagem e selecione um destinatário.');
+                return;
+            }
+
+            hiddenMsg.value = mensagem;
+            hiddenDestinatario.value = destinatario;
+            hiddenChave.value = tipoChave;
+            //alert('Mensagem enviada com sucesso!');
+            formEnvio.submit();
+        }
+
+        btnChavePrivada.addEventListener('click', () => prepararEEnviar('privada'));
+        btnChavePublica.addEventListener('click', () => prepararEEnviar('publica'));
+    </script>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <script>
+          // Pega a primeira mensagem da lista e mostra como um alerta
+          alert("{{ messages[0] }}");
+        </script>
+      {% endif %}
+    {% endwith %}
+</body>
+</html>

@@ -64,7 +64,12 @@ def hash_senha(senha, salt):
     return hashlib.sha256(senha_salt.encode()).hexdigest()
 
 
-def cadastro(conn, nome, email, senha, chave_publica, chave_privada):
+def cadastro(conn, nome, email, senha):
+    
+    chave_privada, chave_publica = gerar_par_chaves()
+    chave_privada = base64.b64encode(chave_privada).decode('utf-8')
+    chave_publica = base64.b64encode(chave_publica).decode('utf-8')
+    
     try:
         cursor = conn.cursor()
         
@@ -86,7 +91,7 @@ def cadastro(conn, nome, email, senha, chave_publica, chave_privada):
         
         conn.commit()
         print("Usuário cadastrado com sucesso!")
-        input()
+        
         return True
         
     except sqlite3.Error as error:
@@ -104,7 +109,7 @@ def login(conn, email, senha):
         
         if not resultado:
             print("Usuário não encontrado!")
-            return False
+            return False, []
         
         nome, email, senha_hash_armazenado, salt = resultado
         
@@ -114,10 +119,10 @@ def login(conn, email, senha):
         # Compara os hashes
         if senha_hash_tentativa == senha_hash_armazenado:
             print("Login bem-sucedido!")
-            menu_usuario(conn, nome, email)
+            return True, [nome,email]
         else:
             print("Senha incorreta!")
-            return False
+            return False, []
             
     except sqlite3.Error as error:
         print(f"Erro ao verificar login: {error}")
@@ -136,7 +141,7 @@ def listar_usuarios(conn):
         for usuario in usuarios:
             print(f"ID: {usuario[0]}, Nome: {usuario[1]}, Email: {usuario[2]} Chave Publica: {usuario[3]}")
         print("-" * 50)
-        input()
+        
         
     except sqlite3.Error as error:
         print(f"Erro ao listar usuários: {error}")
@@ -150,7 +155,6 @@ def criar_chave(conn, email_1, email_2) -> None:
         cursor.execute(f"INSERT into chaves (email_1, email_2, chave_privada) VALUES ('{email_1}', '{email_2}', '{chave}')")
         conn.commit()
         print("Chave Cadastrada com Sucesso!")
-        input()
     
     except:
         return None
@@ -303,12 +307,10 @@ def cadastro_menu(conn):
     nome = input("Nome: ").strip()
     email = input("Email: ").strip().lower()
     senha = input("Senha: ").strip()
-    chave_privada, chave_publica = gerar_par_chaves()
-    chave_privada = base64.b64encode(chave_privada).decode('utf-8')
-    chave_publica = base64.b64encode(chave_publica).decode('utf-8')
+    
             
     if nome and email and senha:
-        cadastro(conn, nome, email, senha, chave_publica, chave_privada)
+        cadastro(conn, nome, email, senha)
     else:
         print("Ocorreu algum erro ao cadastrar o usuário!")
 

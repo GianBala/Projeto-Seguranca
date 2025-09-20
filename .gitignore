@@ -1,2 +1,5 @@
 _pycache_
+__pycache__
 venv
+.venv
+*.db

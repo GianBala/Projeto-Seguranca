@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pesquisar Usuários - Secret MSG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header-with-back">
+            <a href="{{ url_for('menu_principal') }}" class="back-button">&#x2B05;</a>
+            <h1>SECRET MSG</h1>
+        </div>
+        <p class="user-info">Usuário: {{ usuario }}</p>
+        
+        <div class="search-options">
+            <div style="text-align: center; border-right: 2px solid #000; padding: 5px;">
+                <div>Nome</div>
+                <div style="border-top: 2px solid #000; padding-top: 5px;">Email</div>
+            </div>
+            <input type="text" placeholder="Digite item de busca">
+        </div>
+        
+        <div class="user-list">
+            {% for u in usuarios %}
+            <div class="user-item">
+                <span>{{ u.nome }} - {{ u.email }}</span>
+                <span class="radio-button"></span>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <button class="btn btn-primary">Salvar Favoritos</button>
+        
+    </div>
+</body>
+</html>
