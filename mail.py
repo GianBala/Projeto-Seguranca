@@ -2,16 +2,11 @@ import base64
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from Crypto.Cipher import AES
+from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto.Random import get_random_bytes
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Hash import SHA512
-
-# Função de criptografia (MD5 / SHA256)
-
-# Um função para o envio e-mail
-
-# Envia via email criptografado
+from Crypto.PublicKey import RSA
 
 
 def enviar_email(body: str, subject: str, recipient_email: str) -> None:
@@ -49,6 +44,13 @@ def gerar_chave(senha: str) -> bytes:
     return salt + chave
 
 
+def gerar_par_chaves():
+    key = RSA.generate(2048)
+    private_key = key.export_key()
+    public_key = key.publickey().export_key()
+    return private_key, public_key
+
+
 def criptografar(sender: str, mensagem: str, destiny: str, senha: str) -> None:
     
     # Deriva a chave de criptografia a partir da senha
@@ -70,7 +72,7 @@ def criptografar(sender: str, mensagem: str, destiny: str, senha: str) -> None:
     msg_crypt_text = salt + cipher.nonce + tag + ciphertext
     msg_crypt_text = base64.b64encode(msg_crypt_text).decode('utf-8')
 
-    enviar_email(msg_crypt_text, f"Mensagem de :{sender}", destiny)
+    enviar_email(msg_crypt_text, f"Mensagem de :{sender} - Enviado com Chave Privada!", destiny)
 
 
 def descriptografar(mensagem_criptografada:str, senha: str) -> str:
@@ -95,6 +97,49 @@ def descriptografar(mensagem_criptografada:str, senha: str) -> str:
         return dados_descriptografados.decode('utf-8')
     except ValueError:
         return "Erro: Falha na autenticação."
+
+
+def criptografar_publica(sender: str, mensagem: str, destiny: str, public_key_destiny: bytes) -> None:
+    # Gerar uma chave AES aleatória para esta mensagem
+    chave_aes = get_random_bytes(32)  # 256 bits
+    
+    # Criptografar a mensagem com AES
+    cipher_aes = AES.new(chave_aes, AES.MODE_GCM)
+    dados_em_bytes = mensagem.encode('utf-8')
+    ciphertext, tag = cipher_aes.encrypt_and_digest(dados_em_bytes)
+    
+    # Criptografar a chave AES com a chave pública do destinatário
+    rsa_key = RSA.import_key(public_key_destiny)
+    cipher_rsa = PKCS1_OAEP.new(rsa_key)
+    chave_aes_criptografada = cipher_rsa.encrypt(chave_aes)
+    
+    # Preparar o pacote completo
+    pacote = chave_aes_criptografada + cipher_aes.nonce + tag + ciphertext
+    msg_crypt_text = base64.b64encode(pacote).decode('utf-8')
+    
+    enviar_email(msg_crypt_text, f"Mensagem de: {sender} Enviado com Chave Pública!", destiny)
+
+
+def descriptografar_privada(mensagem_criptografada: str, private_key: bytes) -> str:
+    # Decodificar da base64
+    pacote = base64.b64decode(mensagem_criptografada)
+    
+    # Extrair componentes (tamanhos fixos)
+    chave_aes_criptografada = pacote[:256]  # RSA 2048 bits = 256 bytes
+    nonce = pacote[256:272]  # 16 bytes para nonce do AES-GCM
+    tag = pacote[272:288]    # 16 bytes para tag
+    ciphertext = pacote[288:] # Restante é o texto cifrado
+    
+    # Descriptografar a chave AES com a chave privada
+    rsa_key = RSA.import_key(private_key)
+    cipher_rsa = PKCS1_OAEP.new(rsa_key)
+    chave_aes = cipher_rsa.decrypt(chave_aes_criptografada)
+    
+    # Descriptografar a mensagem com AES
+    cipher_aes = AES.new(chave_aes, AES.MODE_GCM, nonce=nonce)
+    mensagem_bytes = cipher_aes.decrypt_and_verify(ciphertext, tag)
+    
+    return mensagem_bytes.decode('utf-8')
 
 
 def test_stress():

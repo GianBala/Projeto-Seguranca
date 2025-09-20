@@ -1,4 +1,5 @@
 import string
+import base64
 import sqlite3
 import hashlib
 import secrets
@@ -31,7 +32,9 @@ def criar_banco_dados():
             email TEXT UNIQUE NOT NULL,
             senha_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
-            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            chave_publica TEXT UNIQUE NOT NULL,
+            chave_privada TEXT NOT NULL
         )
         '''
         )
@@ -40,7 +43,7 @@ def criar_banco_dados():
         CREATE TABLE IF NOT EXISTS chaves (
             email_1 TEXT NOT NULL,
             email_2 TEXT NOT NULL,
-            cnave_privada TEXT NOT NULL
+            chave_privada TEXT NOT NULL
         )
         """)
         conn.commit()
@@ -61,7 +64,7 @@ def hash_senha(senha, salt):
     return hashlib.sha256(senha_salt.encode()).hexdigest()
 
 
-def inserir_usuario(conn, nome, email, senha):
+def cadastro(conn, nome, email, senha, chave_publica, chave_privada):
     try:
         cursor = conn.cursor()
         
@@ -77,9 +80,9 @@ def inserir_usuario(conn, nome, email, senha):
         
         # Insere o usuário
         cursor.execute('''
-        INSERT INTO usuarios (nome, email, senha_hash ,salt)
-        VALUES (?, ?, ?, ?)
-        ''', (nome, email, senha_hash, salt))
+        INSERT INTO usuarios (nome, email, senha_hash ,salt, chave_publica, chave_privada)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ''', (nome, email, senha_hash, salt, chave_publica, chave_privada))
         
         conn.commit()
         print("Usuário cadastrado com sucesso!")
@@ -125,13 +128,13 @@ def listar_usuarios(conn):
     """Lista todos os usuários (apenas para demonstração)"""
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, nome, email FROM usuarios")
+        cursor.execute("SELECT id, nome, email, chave_publica FROM usuarios")
         usuarios = cursor.fetchall()
         
         print("\n Lista de Usuários:")
         print("-" * 50)
         for usuario in usuarios:
-            print(f"ID: {usuario[0]}, Nome: {usuario[1]}, Email: {usuario[2]}")
+            print(f"ID: {usuario[0]}, Nome: {usuario[1]}, Email: {usuario[2]} Chave Publica: {usuario[3]}")
         print("-" * 50)
         input()
         
@@ -144,7 +147,7 @@ def criar_chave(conn, email_1, email_2) -> None:
     
     try:
         cursor = conn.cursor()
-        cursor.execute(f"INSERT into chaves (email_1, email_2, cnave_privada) VALUES ('{email_1}', '{email_2}', '{chave}')")
+        cursor.execute(f"INSERT into chaves (email_1, email_2, chave_privada) VALUES ('{email_1}', '{email_2}', '{chave}')")
         conn.commit()
         print("Chave Cadastrada com Sucesso!")
         input()
@@ -156,7 +159,7 @@ def criar_chave(conn, email_1, email_2) -> None:
 def verificar_chave(conn, email_1: str, email_2: str) -> str:
     try:
         cursor = conn.cursor()
-        cursor.execute(f"SELECT cnave_privada FROM chaves WHERE email_1 = '{email_1}' AND email_2 = '{email_2}'")
+        cursor.execute(f"SELECT chave_privada FROM chaves WHERE email_1 = '{email_1}' AND email_2 = '{email_2}'")
         resultado = cursor.fetchone()
         
         if not resultado:
@@ -168,6 +171,106 @@ def verificar_chave(conn, email_1: str, email_2: str) -> str:
     except:
         return None
 
+
+def pegar_chave_publica(conn, d_email):
+    try:
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT chave_publica FROM usuarios WHERE email = '{d_email}'")
+        resultado = cursor.fetchone()
+        
+        if not resultado:
+            print("Chave pública não encontrada!")
+            return None
+
+        return resultado[0]
+    
+    except:
+        return None
+
+
+def pegar_chave_privada(conn, email):
+    try:
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT chave_privada FROM usuarios WHERE email = '{email}'")
+        resultado = cursor.fetchone()
+        
+        if not resultado:
+            print("Chave pública não encontrada!")
+            return None
+
+        return resultado[0]
+    
+    except:
+        return None
+
+
+def enviar_mensagem(conn, nome, email):
+    print("Inserir Mensagem para Criptografar: ")
+    msg = input()
+    print("Insira o email do destinatário:")
+    d_email = input()
+
+    # Escolher o tipo de chave
+    print("Envia via Chave:")
+    print("1 - Chave Privada")
+    print("2 - Chave Pública")
+    op = int(input())
+    if op == 1:
+        # Verificar se existe uma chave privada para esses usuarios
+        chave = None
+        chave = verificar_chave(conn, email, d_email)
+        if chave != None:
+            criptografar(nome, msg, d_email, chave)
+            print(f"Mensagem Criptografada enviada para {d_email}")
+            input()
+        else:
+            print("Chave Privada não cadastrada!")
+            input()
+    elif op == 2:
+        # Captura a Chave pública do destinatário
+        chave = None
+        chave = pegar_chave_publica(conn, d_email)
+
+        chave = base64.b64decode(chave)
+        if chave != None:
+            criptografar_publica(nome, msg, d_email, chave)
+            print(f"Mensagem Criptografada enviada para {d_email}")
+            input()
+        else:
+            print("Não foi possivel encontra a Chave Pública!")
+            input()
+
+
+def descriptografar(conn, nome, email):
+    print("Inserir Mensagem criptografada: ")
+    msg_cryp = input()
+    print("Escolha o tipo de Chave:")
+    print("1 - Privada")
+    print("2 - Pública")
+    op = int(input())
+    if op == 1:
+        print("Digie o email do remetente")
+        r_email = input()
+        chave = None
+        chave = verificar_chave(conn, r_email, email)
+        if chave != None:
+            msg = descriptografar(msg_cryp, chave)
+            print(msg)
+            input()
+        else:
+            print("Não existe chave entre você e esse usuário")
+            input()
+    elif op == 2:
+        chave = None
+        chave = pegar_chave_privada(conn, email)
+        chave = base64.b64decode(chave)
+        if chave != None:
+            msg = descriptografar_privada(msg_cryp, chave)
+            print(msg)
+            input()
+        else:
+            print("Não existe chave entre você e esse usuário")
+            input()
 
 def menu_usuario(conn, nome: str, email: str) -> None:
     while True:
@@ -187,39 +290,27 @@ def menu_usuario(conn, nome: str, email: str) -> None:
             email_2 = input()
             criar_chave(conn, email, email_2)
         elif option == 2:
-            print("Inserir Mensagem para Criptografar: ")
-            msg = input()
-            print("Insira o email do destinatário:")
-            d_email = input()
-
-            # Verificar se existe uma chave para esses usuarios
-            chave = None
-            chave = verificar_chave(conn, email, d_email)
-            if chave != None:
-                criptografar(nome, msg, d_email, chave)
-                print(f"Mensagem Criptografada enviada para {d_email}")
-                input()
-            else:
-                print("Chave Privada não cadastrada!")
-                input()
-        
+            enviar_mensagem(conn, nome, email)
         elif option == 3:
-            print("Inserir Mensagem criptografada: ")
-            msg_cryp = input()
-            print("Digie o email do remetente")
-            r_email = input()
-            chave = None
-            chave = verificar_chave(conn, r_email, email)
-            if chave != None:
-                msg = descriptografar(msg_cryp, chave)
-                print(msg)
-                input()
-            else:
-                print("Não existe chave entre você e esse usuário")
-                input()
+            descriptografar(conn, nome, email)
         
         elif option == 4:
             return
+
+
+def cadastro_menu(conn):
+    print("\nCADASTRAR USUÁRIO")
+    nome = input("Nome: ").strip()
+    email = input("Email: ").strip().lower()
+    senha = input("Senha: ").strip()
+    chave_privada, chave_publica = gerar_par_chaves()
+    chave_privada = base64.b64encode(chave_privada).decode('utf-8')
+    chave_publica = base64.b64encode(chave_publica).decode('utf-8')
+            
+    if nome and email and senha:
+        cadastro(conn, nome, email, senha, chave_publica, chave_privada)
+    else:
+        print("Ocorreu algum erro ao cadastrar o usuário!")
 
 
 def menu():
@@ -242,15 +333,7 @@ def menu():
         opcao = input("Escolha uma opção: ").strip()
         
         if opcao == "1":
-            print("\nCADASTRAR USUÁRIO")
-            nome = input("Nome: ").strip()
-            email = input("Email: ").strip().lower()
-            senha = input("Senha: ").strip()
-            
-            if nome and email and senha:
-                inserir_usuario(conn, nome, email, senha)
-            else:
-                print("Preencha todos os campos!")
+            cadastro_menu(conn)
                 
         elif opcao == "2":
             print("\nLOGIN")
@@ -271,6 +354,7 @@ def menu():
             print("Opção inválida!")
     
     conn.close()
+
 
 # Execução direta
 if __name__ == "__main__":
