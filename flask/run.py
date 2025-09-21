@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 import sys, os
 caminho_pai = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
 import base64
 # Adiciona o caminho pai à lista de caminhos de importação do Python
 sys.path.append(caminho_pai)
 
-import connections
+import connections, mail
 
 
 app = Flask(__name__)
@@ -103,7 +103,7 @@ def do_cadastro():
 
     if nome and email and senha:
         # Se o cadastro for bem-sucedido, redireciona para o login
-        print('Cadastro realizado com sucesso!')
+        flash(f'Cadastro realizado com sucesso!', 'success')
         connections.cadastro(conn,nome,email,senha)
         return redirect(url_for('login'))
     else:
@@ -190,6 +190,7 @@ def descriptografar_mensagem():
 # ROTA 2: Recebe os dados para processar a descriptografia (via AJAX)
 @app.route('/processar_descriptografia', methods=['POST'])
 def processar_descriptografia():
+    
     msg_criptografada = request.form.get('msg_criptografada')
     remetente_email = request.form.get('remetente')
     tipo_chave = request.form.get('tipo_chave')
@@ -203,17 +204,20 @@ def processar_descriptografia():
 
     if tipo_chave == "publica":
         chave = None
-        chave = connections.verificar_chave(conn, remetente_email, session["email_user"])
-        if chave != None:
-            msg = connections.descriptografar(msg_criptografada, chave)
-    elif tipo_chave == "privada":
-        chave = None
         chave = connections.pegar_chave_privada(conn, session["email_user"])
         chave = base64.b64decode(chave)
         if chave != None:
-            msg = connections.descriptografar_privada(msg_criptografada, chave)
-    msg_descriptografada = f"Mensagem secreta de {remetente_email} foi descriptografada!"
+            msg = mail.descriptografar_publica(msg_criptografada, chave)
+    elif tipo_chave == "privada":
+        chave = None
+        chave = connections.verificar_chave(conn, remetente_email, session["email_user"])
+        if chave != None:
+            msg = mail.descriptografar_privada(msg_criptografada, chave)
     
+    msg_descriptografada = f"Mensagem secreta de {remetente_email} foi descriptografada!: \n\n{msg}"
+    print(msg_descriptografada)
+    return jsonify({'status': 'success', 'message': msg_descriptografada})
+    #return redirect(url_for('descriptografar_mensagem'))
 
 @app.route('/pesquisar')
 def pesquisar_usuarios():

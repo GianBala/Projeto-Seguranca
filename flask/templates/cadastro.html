@@ -27,5 +27,13 @@
         </form>
 
     </div>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <script>
+          // Pega a primeira mensagem da lista e mostra como um alerta
+          alert("{{ messages[0] }}");
+        </script>
+      {% endif %}
+    {% endwith %}
 </body>
 </html>

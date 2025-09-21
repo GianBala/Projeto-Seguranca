@@ -159,7 +159,7 @@ def criar_chave(conn, email_1, email_2) -> None:
     except:
         return None
 
-
+# Crip/Descrip -> Privada
 def verificar_chave(conn, email_1: str, email_2: str) -> str:
     try:
         cursor = conn.cursor()
@@ -176,6 +176,7 @@ def verificar_chave(conn, email_1: str, email_2: str) -> str:
         return None
 
 
+# Crip/Descrip -> Pública
 def pegar_chave_publica(conn, d_email):
     try:
         cursor = conn.cursor()
@@ -192,6 +193,7 @@ def pegar_chave_publica(conn, d_email):
         return None
 
 
+# Crip/Descrip -> Pública
 def pegar_chave_privada(conn, email):
     try:
         cursor = conn.cursor()
@@ -258,7 +260,7 @@ def descriptografar(conn, nome, email):
         chave = None
         chave = verificar_chave(conn, r_email, email)
         if chave != None:
-            msg = descriptografar(msg_cryp, chave)
+            msg = descriptografar_privada(msg_cryp, chave)
             print(msg)
             input()
         else:
@@ -269,12 +271,13 @@ def descriptografar(conn, nome, email):
         chave = pegar_chave_privada(conn, email)
         chave = base64.b64decode(chave)
         if chave != None:
-            msg = descriptografar_privada(msg_cryp, chave)
+            msg = descriptografar_publica(msg_cryp, chave)
             print(msg)
             input()
         else:
             print("Não existe chave entre você e esse usuário")
             input()
+
 
 def menu_usuario(conn, nome: str, email: str) -> None:
     while True:

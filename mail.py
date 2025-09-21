@@ -75,7 +75,7 @@ def criptografar(sender: str, mensagem: str, destiny: str, senha: str) -> None:
     enviar_email(msg_crypt_text, f"Mensagem de :{sender} - Enviado com Chave Privada!", destiny)
 
 
-def descriptografar(mensagem_criptografada:str, senha: str) -> str:
+def descriptografar_privada(mensagem_criptografada:str, senha: str) -> str:
     
     dados_bytes = base64.b64decode(mensagem_criptografada)
     
@@ -120,7 +120,7 @@ def criptografar_publica(sender: str, mensagem: str, destiny: str, public_key_de
     enviar_email(msg_crypt_text, f"Mensagem de: {sender} Enviado com Chave Pública!", destiny)
 
 
-def descriptografar_privada(mensagem_criptografada: str, private_key: bytes) -> str:
+def descriptografar_publica(mensagem_criptografada: str, private_key: bytes) -> str:
     # Decodificar da base64
     pacote = base64.b64decode(mensagem_criptografada)
     
