@@ -140,23 +140,3 @@ def descriptografar_publica(mensagem_criptografada: str, private_key: bytes) -> 
     mensagem_bytes = cipher_aes.decrypt_and_verify(ciphertext, tag)
     
     return mensagem_bytes.decode('utf-8')
-
-
-def test_stress():
-    print("digite a msg para criptografar:")
-    
-    msg = input()
-    destiny = "herlan.init@gmail.com"
-    senha = "1234"
-    criptografar("Giancarlo", msg, destiny, senha)
-    print("SexSex")
-
-    print("digite a msg para descriptografar:")
-    msg_2 = input()
-    msg_2 = msg_2.replace("\n", "")
-
-    text = descriptografar(msg_2, senha)
-    print(text)
-
-if __name__ == "__main__":
-    test_stress()

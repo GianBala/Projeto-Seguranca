@@ -68,6 +68,9 @@ def envio_chave_privada():
         chave = None
         chave = connections.pegar_chave_publica(conn, email_dest)
 
+        if chave == None:
+            flash(f'Erro: Não há chave pública registrada', 'error')
+            return redirect(url_for('enviar_mensagem'))
         chave = base64.b64decode(chave)
         if chave != None:
             connections.criptografar_publica(session["nome_user"], msg, email_dest, chave)
@@ -80,6 +83,10 @@ def envio_chave_privada():
     elif key_type == "privada":
         chave = None
         chave = connections.verificar_chave(conn, session["email_user"], email_dest)
+
+        if chave == None:
+            flash(f'Erro: Não há chave privada cadastrada para {email_dest}', 'error')
+            return redirect(url_for('enviar_mensagem'))
         if chave != None:
             connections.criptografar(session["nome_user"], msg, email_dest, chave)
             flash(f'Mensagem Criptografada enviada para {email_dest}', 'success')
@@ -87,7 +94,7 @@ def envio_chave_privada():
         # enviar_privada(msg,dest)
     
     # Adicione um retorno, como um redirecionamento
-    flash("Mensagem enviada!")
+    #flash("Mensagem enviada!")
     
     return redirect(url_for('enviar_mensagem'))
 
@@ -100,6 +107,12 @@ def do_cadastro():
     senha = request.form.get('senha')
 
     conn = connections.criar_banco_dados()
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT nome, email FROM usuarios WHERE email = '{email}'")
+    results = cursor.fetchall()
+    if len(results) > 0:
+        flash(f'Email ja cadastrado, por favor insira um email diferente', 'error')
+        return redirect(url_for('cadastro'))
 
     if nome and email and senha:
         # Se o cadastro for bem-sucedido, redireciona para o login
@@ -207,14 +220,28 @@ def processar_descriptografia():
         chave = connections.pegar_chave_privada(conn, session["email_user"])
         chave = base64.b64decode(chave)
         if chave != None:
-            msg = mail.descriptografar_publica(msg_criptografada, chave)
+            try:
+                msg = mail.descriptografar_publica(msg_criptografada, chave)
+            except:
+                #flash("Erro no pareamento de chaves, essa mensagem não foi direcionada a você", 'error')
+                return jsonify({'status': 'error', 'message': "Erro no pareamento de chaves, essa mensagem não foi direcionada a você"})  
+        else:
+            #flash("Erro no pareamento de chaves, essa você não possui uma chave cadastrada para esse usuario", 'error')
+            return jsonify({'status': 'error', 'message': "Erro no pareamento de chaves, você não possui uma chave cadastrada para esse usuario"})
     elif tipo_chave == "privada":
         chave = None
         chave = connections.verificar_chave(conn, remetente_email, session["email_user"])
         if chave != None:
-            msg = mail.descriptografar_privada(msg_criptografada, chave)
+            try:
+                msg = mail.descriptografar_privada(msg_criptografada, chave)
+            except:
+                #flash("Erro no pareamento de chaves, essa mensagem não foi direcionada a você", 'error')
+                return jsonify({'status': 'error', 'message': "Erro no pareamento de chaves, essa mensagem não foi direcionada a você"})      
+        else:
+            #flash("Erro no pareamento de chaves, essa você não possui uma chave cadastrada para esse usuario", 'error')
+            return jsonify({'status': 'error', 'message': "Erro no pareamento de chaves, você não possui uma chave cadastrada para esse usuario"})
     
-    msg_descriptografada = f"Mensagem secreta de {remetente_email} foi descriptografada!: \n\n{msg}"
+    msg_descriptografada = f"Mensagem de {remetente_email} foi descriptografada!: \n\n{msg}"
     print(msg_descriptografada)
     return jsonify({'status': 'success', 'message': msg_descriptografada})
     #return redirect(url_for('descriptografar_mensagem'))

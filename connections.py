@@ -201,7 +201,7 @@ def pegar_chave_privada(conn, email):
         resultado = cursor.fetchone()
         
         if not resultado:
-            print("Chave pública não encontrada!")
+            print("Chave privada não encontrada!")
             return None
 
         return resultado[0]
