@@ -6,6 +6,9 @@ import secrets
 import string
 from mail import *
 from os import system
+from Crypto.PublicKey import RSA
+
+MASTER_KEY = "SYSTEM_KEY_MASTER" # Em produção usar uma chave realista e protegida para evitar ataques e roubo de informações
 
 
 def gerar_string_aleatoria_32():
@@ -67,9 +70,13 @@ def hash_senha(senha, salt):
 def cadastro(conn, nome, email, senha):
     
     chave_privada, chave_publica = gerar_par_chaves()
-    chave_privada = base64.b64encode(chave_privada).decode('utf-8')
     chave_publica = base64.b64encode(chave_publica).decode('utf-8')
-    
+
+    # Proteger Chave Privada do Usuário com sua senha 
+    chave_privada = base64.b64encode(chave_privada).decode('utf-8')
+    chave_privada_enc = criptografar_chaves(chave_privada, MASTER_KEY)
+
+
     try:
         cursor = conn.cursor()
         
@@ -87,7 +94,7 @@ def cadastro(conn, nome, email, senha):
         cursor.execute('''
         INSERT INTO usuarios (nome, email, senha_hash ,salt, chave_publica, chave_privada)
         VALUES (?, ?, ?, ?, ?, ?)
-        ''', (nome, email, senha_hash, salt, chave_publica, chave_privada))
+        ''', (nome, email, senha_hash, salt, chave_publica, chave_privada_enc))
         
         conn.commit()
         print("Usuário cadastrado com sucesso!")
@@ -149,15 +156,17 @@ def listar_usuarios(conn):
 
 def criar_chave(conn, email_1, email_2) -> None:
     chave = gerar_string_aleatoria_32()
+    chave_privada_enc = criptografar_chaves(chave, MASTER_KEY)
     
     try:
         cursor = conn.cursor()
-        cursor.execute(f"INSERT into chaves (email_1, email_2, chave_privada) VALUES ('{email_1}', '{email_2}', '{chave}')")
+        cursor.execute(f"INSERT into chaves (email_1, email_2, chave_privada) VALUES ('{email_1}', '{email_2}', '{chave_privada_enc}')")
         conn.commit()
         print("Chave Cadastrada com Sucesso!")
     
     except:
         return None
+
 
 # Crip/Descrip -> Privada
 def verificar_chave(conn, email_1: str, email_2: str) -> str:
@@ -170,7 +179,9 @@ def verificar_chave(conn, email_1: str, email_2: str) -> str:
             print("Chave para esse Usuário não encontrada!")
             return None
 
-        return resultado[0]
+        chave = descriptografar_chave(resultado[0], MASTER_KEY)
+        
+        return chave
     
     except:
         return None
@@ -204,7 +215,9 @@ def pegar_chave_privada(conn, email):
             print("Chave privada não encontrada!")
             return None
 
-        return resultado[0]
+        chave = resultado[0]
+        chave = descriptografar_chave(chave, MASTER_KEY)
+        return chave
     
     except:
         return None

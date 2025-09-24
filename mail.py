@@ -51,6 +51,54 @@ def gerar_par_chaves():
     return private_key, public_key
 
 
+def criptografar_chaves(texto: str, senha: str) -> str:
+    
+    # Deriva a chave de criptografia a partir da senha
+    salt_e_chave = gerar_chave(senha)
+    salt = salt_e_chave[:16]
+    chave = salt_e_chave[16:]
+
+    # Converte a mensagem para bytes, que é o formato exigido pelo AES
+    dados_em_bytes = texto.encode('utf-8')
+
+    # Cria o objeto de criptografia AES
+    cipher = AES.new(chave, AES.MODE_GCM)
+    
+    # Criptografa a mensagem e gera uma tag de autenticação
+    ciphertext, tag = cipher.encrypt_and_digest(dados_em_bytes)
+    
+    #msg_crypt = (salt, cipher.nonce, tag, ciphertext)
+
+    msg_crypt_text = salt + cipher.nonce + tag + ciphertext
+    msg_crypt_text = base64.b64encode(msg_crypt_text).decode('utf-8')
+    return msg_crypt_text
+
+
+def descriptografar_chave(texto:str, senha: str) -> str:
+    
+    dados_bytes = base64.b64decode(texto)
+    
+    salt = dados_bytes[:16]          # Primeiros 16 bytes
+    nonce = dados_bytes[16:32]       # Proximos 16 bytes
+    tag = dados_bytes[32:48]         # Proximos 16 bytes
+    ciphertext = dados_bytes[48:]    # O restante
+
+    
+    # Deriva a chave novamente, usando o mesmo salt
+    chave = PBKDF2(senha, salt, dkLen=32, count=100000, hmac_hash_module=SHA512)
+
+    # Cria o objeto de descriptografia AES
+    cipher = AES.new(chave, AES.MODE_GCM, nonce=nonce)
+    
+    # Descriptografa e verifica a autenticidade da mensagem
+    try:
+        dados_descriptografados = cipher.decrypt_and_verify(ciphertext, tag)
+        return dados_descriptografados.decode('utf-8')
+    except ValueError:
+        return "Erro: Falha na autenticação."
+
+
+
 def criptografar(sender: str, mensagem: str, destiny: str, senha: str) -> None:
     
     # Deriva a chave de criptografia a partir da senha
