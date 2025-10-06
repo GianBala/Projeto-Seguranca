@@ -18,7 +18,7 @@ app.secret_key = 'sua_chave_secreta_aqui'
 @app.route('/')
 def login():
     """ Rota para a tela de login. """
-    return render_template('login.html')
+    return render_template('Olá mundo!')
 
 @app.route('/login', methods=['POST'])
 def do_login():
@@ -51,7 +51,7 @@ def do_login():
 @app.route('/cadastro')
 def cadastro():
     """ Rota para a tela de cadastro. """
-    return render_template('cadastro.html')
+    return render_template('projeto_test/cadastro.html')
 
 # Lembre-se que sua função no Flask deve estar assim:
 @app.route('/enviar_por_chave_privada', methods=['POST'])
